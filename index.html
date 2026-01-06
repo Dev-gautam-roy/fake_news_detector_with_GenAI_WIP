@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Fake News Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 25px;
+      width: 90%;
+      max-width: 650px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    li {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>AI Fake News Detection</h1>
+
+    <h3 id="accuracy">Model Accuracy: Loading...</h3>
+
+    <textarea id="newsText" placeholder="Paste news article here..."></textarea>
+
+    <button onclick="checkNews()">Check News</button>
+
+    <div id="result" class="result"></div>
+
+    <h3>Recent Checks</h3>
+    <ul id="history"></ul>
+  </div>
+
+  <script>
+    async function checkNews() {
+      const text = document.getElementById("newsText").value;
+      const resultDiv = document.getElementById("result");
+
+      if (!text.trim()) {
+        resultDiv.innerText = "Please enter news text";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ text: text })
+        });
+
+        const data = await response.json();
+        resultDiv.innerText = data.result;
+
+        loadHistory();
+
+      } catch (error) {
+        resultDiv.innerText = "Error connecting to AI server";
+        console.error(error);
+      }
+    }
+
+    async function loadAccuracy() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/accuracy");
+        const data = await response.json();
+        document.getElementById("accuracy").innerText =
+          "Model Accuracy: " + data.accuracy + "%";
+      } catch (error) {
+        document.getElementById("accuracy").innerText =
+          "Model Accuracy: Not Available";
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/history");
+        const data = await response.json();
+
+        const list = document.getElementById("history");
+        list.innerHTML = "";
+
+        data.forEach(item => {
+          const li = document.createElement("li");
+          li.innerText = item.text + " → " + item.result;
+          list.appendChild(li);
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Load accuracy when page opens
+    loadAccuracy();
+  </script>
+</body>
+</html>
